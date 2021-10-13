@@ -13,6 +13,8 @@
         <module>sprint2</module>
         <module>sprint3</module>
         <module>sprint4</module>
+        <module>sprint5</module>
+        <module>sprint6</module>
     </modules>
 
     <properties>
