@@ -1,0 +1,2 @@
+auth:
+  secret: ${AUTH_SERVICE_SECRET}
