@@ -9,6 +9,6 @@ import ru.sber.services.CombinedBean
 @ComponentScan("ru.sber.services")
 class ServicesConfig {
 
-    @Bean
+    @Bean(initMethod = "customInit")
     fun combinedBean() = CombinedBean()
 }

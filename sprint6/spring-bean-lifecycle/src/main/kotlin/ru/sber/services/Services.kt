@@ -30,7 +30,6 @@ class CombinedBean : InitializingBean {
         afterPropertiesSetOrderMessage = "afterPropertiesSet() is called"
     }
 
-    @PostConstruct
     fun customInit() {
         customInitOrderMessage = "customInit() is called"
     }
