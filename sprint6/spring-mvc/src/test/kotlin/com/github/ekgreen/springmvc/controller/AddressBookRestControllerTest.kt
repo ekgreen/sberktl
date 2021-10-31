@@ -89,6 +89,20 @@ internal class AddressBookRestControllerTest {
     }
 
     @Test
+    fun authorizationCheck() {
+        // when
+        val actual = testRestTemplate.exchange(
+            "http://localhost:${port}/api/v1/book/",
+            HttpMethod.GET,
+            null,
+            ContactDto::class.java
+        )
+
+        // then
+        assertEquals(HttpStatus.FORBIDDEN, actual.statusCode)
+    }
+
+    @Test
     fun addContact() {
         // given
         val expected = ContactDto(

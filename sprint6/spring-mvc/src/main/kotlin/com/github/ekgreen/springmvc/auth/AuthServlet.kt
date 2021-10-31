@@ -37,11 +37,11 @@ class AuthServlet(private val authService: AuthService, private val engine: Temp
         private val loginPattern: Pattern = Pattern.compile("^[a-zA-Z0-9-_]{4,32}$")
     }
 
-    override fun doGet(request: HttpServletRequest, response: HttpServletResponse) {
+    public override fun doGet(request: HttpServletRequest?, response: HttpServletResponse?) {
         doRequest(request, response)
     }
 
-    override fun doPost(request: HttpServletRequest?, response: HttpServletResponse?) {
+    public override fun doPost(request: HttpServletRequest?, response: HttpServletResponse?) {
         doRequest(
             request,
             response,
