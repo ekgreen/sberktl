@@ -1,7 +1,6 @@
+package ru.sber.filesystem;
+
 import junit.framework.TestCase;
-import ru.sber.filesystem.FileServer;
-import ru.sber.filesystem.VFilesystem;
-import ru.sber.filesystem.VPath;
 
 import java.io.*;
 import java.net.HttpURLConnection;

@@ -1,2 +1,8 @@
 auth:
   secret: ${AUTH_SERVICE_SECRET}
+
+logging:
+  level:
+    com:
+      github:
+        ekgreen: DEBUG

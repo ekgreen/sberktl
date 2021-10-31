@@ -6,12 +6,14 @@ import com.github.ekgreen.springmvc.auth.AuthServlet
 import com.github.ekgreen.springmvc.auth.AuthTokenizer
 import com.github.ekgreen.springmvc.auth.HmacJwtAuthTokenizer
 import com.github.ekgreen.springmvc.da.UserRepository
+import com.github.ekgreen.springmvc.model.converter.UserTransformation
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.thymeleaf.TemplateEngine
 import java.util.*
 
 
@@ -19,10 +21,10 @@ import java.util.*
 class AuthConfiguration {
 
     @Bean("authServlet")
-    fun authServletBean(authService: AuthService, objectMapper: ObjectMapper)
+    fun authServletBean(authService: AuthService, engine: TemplateEngine)
             : ServletRegistrationBean<AuthServlet> {
         val bean = ServletRegistrationBean(
-            AuthServlet(authService, objectMapper), "/auth/*"
+            AuthServlet(authService, engine), "/auth/*"
         )
         bean.setLoadOnStartup(1)
         return bean
@@ -32,9 +34,10 @@ class AuthConfiguration {
     fun authService(
         userRepository: UserRepository,
         passwordEncoder: PasswordEncoder,
+        userMapper: UserTransformation,
         authTokenizer: AuthTokenizer
     ): AuthService{
-        return AuthService(userRepository, passwordEncoder, authTokenizer)
+        return AuthService(userRepository, passwordEncoder, userMapper, authTokenizer)
     }
 
     @Bean

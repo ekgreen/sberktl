@@ -1,0 +1,78 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" th:href="@{/image/favicon.png}"/>
+
+    <title>Signin Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link th:href="@{/css/bootstrap/bootstrap.min.css}" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link th:href="@{/css/view.css}" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<main role="main" class="container">
+    <div class="col-md-8 order-md-1">
+        <h4 class="mb-3">View contact</h4>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="firstName">First name</label>
+                <input type="text" class="form-control" name="firstName" id="firstName" placeholder=""
+                       th:value="${contact.firstName}" readonly>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="lastName">Last name</label>
+                <input type="text" class="form-control" name="lastName" id="lastName" placeholder=""
+                       th:value="${contact.lastName}" readonly>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="middleName">Middle name <span class="text-muted">(Optional)</span></label>
+            <input type="text" class="form-control" name="middleName" id="middleName" placeholder=""
+                   th:value="${contact.middleName}" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label for="username">Username</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">@</span>
+                </div>
+                <input type="text" class="form-control" name="nickname" id="username" placeholder="Username"
+                       th:value="${contact.nickname}" readonly>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="email">Email <span class="text-muted">(Optional)</span></label>
+            <input type="email" class="form-control" name="email" id="email" placeholder="" th:value="${contact.email}"
+                   readonly>
+        </div>
+
+        <div class="mb-3">
+            <label for="address">Address</label>
+            <input type="text" class="form-control" name="location" id="address" placeholder=""
+                   th:value="${contact.location}" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label for="mobileNumber">Mobile number <span class="text-muted">(Optional)</span></label>
+            <input type="text" class="form-control" name="mobileNumber" id="mobileNumber" placeholder=""
+                   th:value="${contact.mobileNumber}" readonly>
+        </div>
+
+        <button class="btn btn-lg btn-light btn-block mt-5" type="button"><a th:href="@{/app/v1/book/main}">Back to
+            main</a>
+        </button>
+    </div>
+</main>
+
+</body>
+</html>

@@ -8,9 +8,7 @@ class UserRepository(private val users: MutableMap<String, User> = ConcurrentHas
     init {
         users["Wall-E"] = User(
             login     = "Wall-E",
-            password  = "\$2a\$10\$AS8VMex2OWKeH/.PMnZRv.G8rnM/TZS4Q1pW6Sp4R0e9OUDB6Zq8m",
-            firstName = "Wall",
-            lastName  = "E",
+            password  = "\$2a\$10\$KrCvQStIcK4RlouGpyi86utKl0aKgrwrWk9Y7q3xYhzw.3RuvJj8W",
             email     = "walle@space.in"
         )
     }

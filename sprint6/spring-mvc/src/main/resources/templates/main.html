@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" th:href="@{/image/favicon.png}"/>
+
+    <title>Signin Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link th:href="@{/css/bootstrap/bootstrap.min.css}" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link th:href="@{/css/main.css}" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<main role="main" class="container">
+    <div class="mb-3">
+        <h4 class="mb-3 mt-3">Address book</h4>
+        <form th:action="@{/app/v1/book/list}" class="main-form-inline my-2 my-lg-0" method="get">
+            <input class="form-control input-search mr-sm-2" type="text" name="search" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-success my-2 my-sm-0 mr-0 ml-auto" type="submit">Search</button>
+        </form>
+    </div>
+
+    <div class="my-3 p-3 bg-white rounded box-shadow">
+        <h6 class="border-bottom border-gray pb-2 mb-0">Результат поиска</h6>
+        <tr th:each="contact: ${contacts}">
+            <div class="media text-muted pt-3">
+                <img data-src="holder.js/32x32?theme=thumb&bg=007bff&fg=007bff&size=1" alt="" class="mr-2 rounded">
+                <div class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <strong class="text-gray-dark"><span th:text="${contact.fullName()}"></span></strong>
+                        <a th:href="@{/app/v1/book/edit/} + ${contact.id}">Edit</a>
+                    </div>
+                    <a th:href="@{/app/v1/book/view/} + ${contact.id}" class="d-block">@<span th:text="${contact.nickname}"></span></a>
+                </div>
+            </div>
+        </tr>
+    </div>
+</main>
+
+</body>
+</html>

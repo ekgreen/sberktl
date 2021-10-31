@@ -13,6 +13,7 @@ import java.util.regex.Pattern
 class AuthService(
     private val repository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
+    private val userMapper: UserTransformation,
     private val tokenizer: AuthTokenizer
     ) {
 
@@ -52,7 +53,7 @@ class AuthService(
      * если аутентификация завершилась неуспешно
      */
     fun signUp(userDto: UserDto): String? {
-        val user: User = Mappers.getMapper(UserTransformation::class.java).transformToModel(userDto)
+        val user: User = userMapper.transformToModel(userDto)
 
         // возможно эти данные надо отдавать на PL, чтобы пользователю было понятно почему он не зарегестрирован
         // но так как у нас тестовый пример, не будем усложнять
