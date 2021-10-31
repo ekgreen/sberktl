@@ -4,10 +4,8 @@ import com.github.ekgreen.springmvc.book.BookingService
 import com.github.ekgreen.springmvc.model.Contact
 import com.github.ekgreen.springmvc.model.converter.ContactTransformation
 import com.github.ekgreen.springmvc.model.dto.ContactDto
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -20,6 +18,7 @@ import org.springframework.util.MultiValueMap
 import java.time.LocalDate
 
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestPropertySource(properties = ["auth.secret=elephant_on_the_street_playing_with_boy_321"])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 internal class AddressBookRestControllerTest {
@@ -37,26 +36,33 @@ internal class AddressBookRestControllerTest {
     private lateinit var mapper: ContactTransformation
 
     // default contact in service
-    private val contact: Contact = Contact(
-        id = "e7fbed0f-3593-4b2e-ae67-c09c04b2caa4",
-        nickname = "walle",
-        firstName = "Валли",
-        lastName = "Космический",
-        birthDate = LocalDate.of(1990, 10, 10),
-        location = "Space",
-        email = "walle@gmail.com",
-        mobileNumber = "+79999999999"
-    )
+    private lateinit var contact: Contact
 
-    @BeforeEach
-    fun setUp(){
-        bookingService.add(contact)
-
+    @BeforeAll
+    fun beforeAll() {
         val requestFactory = HttpComponentsClientHttpRequestFactory()
         requestFactory.setConnectTimeout(Companion.TIMEOUT)
         requestFactory.setReadTimeout(Companion.TIMEOUT)
 
         testRestTemplate.restTemplate.setRequestFactory(requestFactory)
+    }
+
+    @BeforeEach
+    fun setUp(){
+        contact = bookingService.add(Contact(
+            nickname = "walle",
+            firstName = "Валли",
+            lastName = "Космический",
+            birthDate = LocalDate.of(1990, 10, 10),
+            location = "Space",
+            email = "walle@gmail.com",
+            mobileNumber = "+79999999999"
+        ))
+    }
+
+    @AfterEach
+    fun tearDown() {
+        bookingService.delete(contact.id!!)
     }
 
     fun authorizationHeaders(): HttpHeaders {
@@ -162,6 +168,19 @@ internal class AddressBookRestControllerTest {
 
     @Test
     fun deleteContact() {
+        // when
+        val actual = testRestTemplate.exchange(
+            "http://localhost:${port}/api/v1/book/delete/${contact.id}",
+            HttpMethod.DELETE,
+            HttpEntity(null, authorizationHeaders()),
+            ContactDto::class.java
+        )
+
+        // then
+        assertEquals(HttpStatus.OK, actual.statusCode)
+        assertNotNull(actual.body)
+        assertEquals(contact, mapper.transformToModel(actual.body!!))
+        assertNull(bookingService.get(contact.id!!))
     }
 
     companion object {
