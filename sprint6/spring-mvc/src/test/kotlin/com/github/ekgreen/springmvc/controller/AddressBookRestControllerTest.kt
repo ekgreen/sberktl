@@ -16,6 +16,7 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import java.time.LocalDate
+import java.util.*
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -48,16 +49,18 @@ internal class AddressBookRestControllerTest {
     }
 
     @BeforeEach
-    fun setUp(){
-        contact = bookingService.add(Contact(
-            nickname = "walle",
-            firstName = "Валли",
-            lastName = "Космический",
-            birthDate = LocalDate.of(1990, 10, 10),
-            location = "Space",
-            email = "walle@gmail.com",
-            mobileNumber = "+79999999999"
-        ))
+    fun setUp() {
+        contact = bookingService.add(
+            Contact(
+                nickname = "walle",
+                firstName = "Валли",
+                lastName = "Космический",
+                birthDate = LocalDate.of(1990, 10, 10),
+                location = "Space",
+                email = "walle@gmail.com",
+                mobileNumber = "+79999999999"
+            )
+        )
     }
 
     @AfterEach
@@ -72,7 +75,11 @@ internal class AddressBookRestControllerTest {
         request.set("password", "eva")
 
         // send
-        val response = testRestTemplate.postForEntity("http://localhost:${port}/auth/login", HttpEntity(request, HttpHeaders()), String::class.java)
+        val response = testRestTemplate.postForEntity(
+            "http://localhost:${port}/auth/login",
+            HttpEntity(request, HttpHeaders()),
+            String::class.java
+        )
 
         // create request headers
         val headers: HttpHeaders = HttpHeaders()
@@ -96,7 +103,6 @@ internal class AddressBookRestControllerTest {
             mobileNumber = "+79999999999"
         )
 
-
         // when
         val actual = testRestTemplate.exchange(
             "http://localhost:${port}/api/v1/book/add",
@@ -116,6 +122,34 @@ internal class AddressBookRestControllerTest {
     }
 
     @Test
+    fun `add corrupted contact`() {
+        // given
+        val expected = ContactDto(
+            id = null,
+            nickname = "walle2",
+            firstName = null,
+            middleName = null,
+            lastName = null,
+            birthDate = LocalDate.of(1990, 11, 11),
+            location = "Space",
+            email = "walle@gmail.com",
+            mobileNumber = "+79999999999"
+        )
+
+        // when
+        val actual = testRestTemplate.exchange(
+            "http://localhost:${port}/api/v1/book/add",
+            HttpMethod.POST,
+            HttpEntity(expected, authorizationHeaders()),
+            ContactDto::class.java
+        )
+
+        // then
+        assertEquals(HttpStatus.BAD_REQUEST, actual.statusCode)
+    }
+
+
+    @Test
     fun contextSearch() {
         // when
         val actual = testRestTemplate.exchange(
@@ -132,6 +166,20 @@ internal class AddressBookRestControllerTest {
     }
 
     @Test
+    fun `request without content`() {
+        // when
+        val actual = testRestTemplate.exchange(
+            "http://localhost:${port}/api/v1/book/list?search=aa",
+            HttpMethod.GET,
+            HttpEntity(null, authorizationHeaders()),
+            Array<out ContactDto>::class.java
+        )
+
+        // then
+        assertEquals(HttpStatus.NO_CONTENT, actual.statusCode)
+    }
+
+    @Test
     fun viewContact() {
         // when
         val actual = testRestTemplate.exchange(
@@ -145,6 +193,20 @@ internal class AddressBookRestControllerTest {
         assertEquals(HttpStatus.OK, actual.statusCode)
         assertNotNull(actual.body)
         assertEquals(contact, mapper.transformToModel(actual.body!!))
+    }
+
+    @Test
+    fun `view with not exists id`() {
+        // when
+        val actual = testRestTemplate.exchange(
+            "http://localhost:${port}/api/v1/book/view/${UUID.randomUUID()}",
+            HttpMethod.GET,
+            HttpEntity(null, authorizationHeaders()),
+            ContactDto::class.java
+        )
+
+        // then
+        assertEquals(HttpStatus.NO_CONTENT, actual.statusCode)
     }
 
     @Test
@@ -167,6 +229,23 @@ internal class AddressBookRestControllerTest {
     }
 
     @Test
+    fun `edit with not exists id`() {
+        // given
+        val expected = contact.copy(mobileNumber = "+79999999998")
+
+        // when
+        val actual = testRestTemplate.exchange(
+            "http://localhost:${port}/api/v1/book/edit/${UUID.randomUUID()}",
+            HttpMethod.PATCH,
+            HttpEntity(expected, authorizationHeaders()),
+            ContactDto::class.java
+        )
+
+        // then
+        assertEquals(HttpStatus.NO_CONTENT, actual.statusCode)
+    }
+
+    @Test
     fun deleteContact() {
         // when
         val actual = testRestTemplate.exchange(
@@ -181,6 +260,20 @@ internal class AddressBookRestControllerTest {
         assertNotNull(actual.body)
         assertEquals(contact, mapper.transformToModel(actual.body!!))
         assertNull(bookingService.get(contact.id!!))
+    }
+
+    @Test
+    fun `delete with not exists id`() {
+        // when
+        val actual = testRestTemplate.exchange(
+            "http://localhost:${port}/api/v1/book/delete/${UUID.randomUUID()}",
+            HttpMethod.DELETE,
+            HttpEntity(null, authorizationHeaders()),
+            ContactDto::class.java
+        )
+
+        // then
+        assertEquals(HttpStatus.NO_CONTENT, actual.statusCode)
     }
 
     companion object {

@@ -37,10 +37,7 @@ class AddressBookRestController(private val service: BookingService, private val
     }
 
     @GetMapping("/view/{id}")
-    fun viewContact(@PathVariable("id") id: String?): ResponseEntity<ContactDto>{
-        if(id == null || id.isEmpty())
-            return ResponseEntity(HttpStatus.BAD_REQUEST)
-
+    fun viewContact(@PathVariable("id") id: String): ResponseEntity<ContactDto>{
         val model = service.get(id)
             ?: return ResponseEntity(HttpStatus.NO_CONTENT)
 
@@ -48,10 +45,7 @@ class AddressBookRestController(private val service: BookingService, private val
     }
 
     @PatchMapping("/edit/{id}")
-    fun editContact(@PathVariable("id") id: String? , @RequestBody contact: ContactDto): ResponseEntity<ContactDto>{
-        if(id == null || id.isEmpty())
-            return ResponseEntity(HttpStatus.BAD_REQUEST)
-
+    fun editContact(@PathVariable("id") id: String, @RequestBody contact: ContactDto): ResponseEntity<ContactDto>{
         val model = service.edit(id, mapper.transformToModel(contact))
             ?: return ResponseEntity(HttpStatus.NO_CONTENT)
 
@@ -59,10 +53,7 @@ class AddressBookRestController(private val service: BookingService, private val
     }
 
     @DeleteMapping("/delete/{id}")
-    fun deleteContact(@PathVariable("id") id: String?): ResponseEntity<ContactDto>{
-        if(id == null || id.isEmpty())
-            return ResponseEntity(HttpStatus.BAD_REQUEST)
-
+    fun deleteContact(@PathVariable("id") id: String): ResponseEntity<ContactDto>{
         val model = service.delete(id)
             ?: return ResponseEntity(HttpStatus.NO_CONTENT)
 
