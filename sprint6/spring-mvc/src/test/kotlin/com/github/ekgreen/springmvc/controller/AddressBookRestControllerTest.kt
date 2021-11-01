@@ -4,6 +4,7 @@ import com.github.ekgreen.springmvc.book.BookingService
 import com.github.ekgreen.springmvc.model.Contact
 import com.github.ekgreen.springmvc.model.converter.ContactTransformation
 import com.github.ekgreen.springmvc.model.dto.ContactDto
+import org.apache.http.impl.client.HttpClientBuilder
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,8 +21,8 @@ import java.util.*
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@TestPropertySource(properties = ["auth.secret=elephant_on_the_street_playing_with_boy_321"])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = ["AUTH_SERVICE_SECRET=elephant_on_the_street_playing_with_boy"])
 internal class AddressBookRestControllerTest {
 
     @LocalServerPort
@@ -41,9 +42,17 @@ internal class AddressBookRestControllerTest {
 
     @BeforeAll
     fun beforeAll() {
+        // настраиваем специально для PATCH
         val requestFactory = HttpComponentsClientHttpRequestFactory()
         requestFactory.setConnectTimeout(Companion.TIMEOUT)
         requestFactory.setReadTimeout(Companion.TIMEOUT)
+
+        // отключаем сохранение кук
+        val httpClient = HttpClientBuilder.create()
+            .disableCookieManagement()
+            .build()
+
+        requestFactory.httpClient = httpClient
 
         testRestTemplate.restTemplate.setRequestFactory(requestFactory)
     }
