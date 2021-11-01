@@ -1,6 +1,5 @@
 package com.github.ekgreen.springmvc
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.ekgreen.springmvc.auth.AuthService
 import com.github.ekgreen.springmvc.auth.AuthServlet
 import com.github.ekgreen.springmvc.auth.AuthTokenizer
@@ -18,7 +17,7 @@ import java.util.*
 
 
 @Configuration
-class AuthConfiguration {
+class AuthServiceConfiguration {
 
     @Bean("authServlet")
     fun authServletBean(authService: AuthService, engine: TemplateEngine)
@@ -55,4 +54,5 @@ class AuthConfiguration {
         // ps понятно что его в открытом виде не надо и хранить
         return HmacJwtAuthTokenizer(String(Base64.getEncoder().encode(token.toByteArray())))
     }
+
 }

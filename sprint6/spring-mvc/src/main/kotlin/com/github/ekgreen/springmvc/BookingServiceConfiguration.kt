@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration
 
 
 @Configuration
-class BookingConfiguration {
+class BookingServiceConfiguration {
 
     @Bean
     fun bookingRepository(): BookingRepository {

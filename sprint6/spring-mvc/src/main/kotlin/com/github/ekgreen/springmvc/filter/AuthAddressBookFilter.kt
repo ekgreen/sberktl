@@ -1,7 +1,9 @@
 package com.github.ekgreen.springmvc.filter
 
+import com.github.ekgreen.springmvc.auth.AuthConfiguration
 import com.github.ekgreen.springmvc.auth.AuthServlet.Companion.AUTHORIZATION
 import com.github.ekgreen.springmvc.auth.AuthTokenizer
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 import javax.servlet.FilterChain
@@ -11,10 +13,15 @@ import javax.servlet.http.HttpServletResponse
 
 @Component
 // я умышлено не использую аннотацию WebFilter
-class AuthAddressBookFilter(private val tokenizer: AuthTokenizer): OncePerRequestFilter() {
-    override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain
+class AuthAddressBookFilter(
+    private val configuration: AuthConfiguration,
+    private val tokenizer: AuthTokenizer
+) : OncePerRequestFilter() {
+
+    override fun doFilterInternal(
+        request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain
     ) {
-        if (!request.servletPath.startsWith("/auth")) {
+        if (configuration.security.any { path -> request.requestURI.startsWith(path) }) {
             val cookies: Array<out Cookie>? = request.cookies
 
             if (cookies == null) {
@@ -30,6 +37,6 @@ class AuthAddressBookFilter(private val tokenizer: AuthTokenizer): OncePerReques
             }
         }
 
-        filterChain.doFilter(request,response)
+        filterChain.doFilter(request, response)
     }
 }
