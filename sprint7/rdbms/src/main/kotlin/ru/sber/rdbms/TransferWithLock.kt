@@ -49,11 +49,7 @@ class TransferWithLock(private val connectionFactory: ConnectionFactory, private
         }
     }
 
-    private fun createPessimisticChange(
-        connection: Connection,
-        decrementAccountId: Long,
-        incrementAccountId: Long
-    ): Change {
+    private fun createPessimisticChange(connection: Connection, decrementAccountId: Long, incrementAccountId: Long): Change {
         val accounts = pessimisticLockOrder(decrementAccountId, incrementAccountId).map { accountId ->
             connection.prepareStatement("select id, amount, version from rdbms.account where id = $accountId for update")
                 .use { statement ->
@@ -100,7 +96,6 @@ class TransferWithLock(private val connectionFactory: ConnectionFactory, private
     private fun mapAccountFromResultSet(resultSet: ResultSet): Account {
         return Account(resultSet.getLong(1), resultSet.getLong(2), resultSet.getLong(3))
     }
-
 
     private interface Change {
         fun change(amount: Long, connection: Connection)
