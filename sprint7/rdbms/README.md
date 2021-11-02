@@ -23,3 +23,5 @@
 
 PostgreSQL будем запускать в **docker**:
 > docker run --rm --name sprint-7-pg-14 -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=db -d postgres:14
+
+А для _интеграционных тестов_ будем использовать [@testcontainers](https://www.testcontainers.org/test_framework_integration/junit_5/) 
