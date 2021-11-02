@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - include:
+      file: changeset/v-1.0/2021-11-02--01-initial-schema-import.sql
+  - include:
+      file: changeset/v-1.0/2021-11-02--02-initial-account-import.sql
+  - include:
+      file: changeset/v-1.0/2021-11-02--03-create-account-index.sql
+  - include:
+      file: changeset/v-1.0/2021-11-02--04-dml-create-user-accounts.sql
