@@ -1,24 +1,55 @@
 package ru.sber.rdbms
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import liquibase.Contexts
+import liquibase.Liquibase
+import liquibase.database.Database
+import liquibase.database.DatabaseFactory
+import liquibase.database.jvm.JdbcConnection
+import liquibase.resource.ClassLoaderResourceAccessor
 import mu.KLogging
-import org.junit.jupiter.api.Test
-
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
 import ru.sber.rdbms.api.AccountTransfer
 import ru.sber.rdbms.api.Lock
 import ru.sber.rdbms.factory.ConnectionFactory
 import ru.sber.rdbms.factory.EasyConnectionFactory
 import java.sql.Connection
 
+
+@Testcontainers
 internal class AccountTransferTest {
 
-    private val connectionFactory: ConnectionFactory = EasyConnectionFactory(url, user, password)
+    @Container
+    private val dataBaseContainer: TestPostgreSQLContainer =
+        TestPostgreSQLContainer("postgres:14")
+            .withDatabaseName(name)
+            .withUsername(user)
+            .withPassword(password)
+
+    private lateinit var connectionFactory: ConnectionFactory
 
     @BeforeEach
     fun setUp() {
-        rollbackAccounts()
+        connectionFactory = EasyConnectionFactory(dataBaseContainer.jdbcUrl, user, password)
+
+        val connection: Connection = connectionFactory.openConnection()
+        val database: Database =
+            DatabaseFactory.getInstance().findCorrectDatabaseImplementation(JdbcConnection(connection))
+
+        val liquibase: Liquibase = Liquibase(
+            "db.changelog-master.yaml",
+            ClassLoaderResourceAccessor(),
+            database
+        )
+        liquibase.update(Contexts())
     }
 
     @Test
@@ -175,13 +206,6 @@ internal class AccountTransferTest {
 
 
     // region evaluations
-    private fun rollbackAccounts() {
-        connectionFactory.openConnection().use { connection ->
-            connection.prepareStatement("update rdbms.account set amount = 2000, version = 0 where id in (1,2)").use {
-                it.executeUpdate()
-            }
-        }
-    }
 
     private fun getAccountVersion(accountId: Long, connection: Connection): Long {
         connection.prepareStatement("select version from rdbms.account where id = 1").use { it.executeQuery().use {
@@ -190,7 +214,7 @@ internal class AccountTransferTest {
         } }
     }
 
-    private fun testTransfer(expectedAmountOn1: Int, expectedAmountOn2: Int, ) {
+    private fun testTransfer(expectedAmountOn1: Int, expectedAmountOn2: Int) {
         connectionFactory.openConnection().use { connection ->
             arrayOf(expectedAmountOn1, expectedAmountOn2).withIndex().forEach {
                 connection.prepareStatement("select amount from rdbms.account where id = ${it.index + 1}")
@@ -206,8 +230,10 @@ internal class AccountTransferTest {
 
     // endregion
 
+    class TestPostgreSQLContainer(imageName: String) : PostgreSQLContainer<TestPostgreSQLContainer>(imageName)
+
     companion object : KLogging() {
-        const val url: String = "jdbc:postgresql://localhost:5432/db"
+        const val name: String = "db"
         const val user: String = "postgres"
         const val password: String = "postgres"
     }
