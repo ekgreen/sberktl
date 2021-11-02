@@ -40,23 +40,17 @@ internal class AccountTransferTest {
     fun setUp() {
         connectionFactory = EasyConnectionFactory(dataBaseContainer.jdbcUrl, user, password)
 
-        val connection: Connection = connectionFactory.openConnection()
-        val database: Database =
-            DatabaseFactory.getInstance().findCorrectDatabaseImplementation(JdbcConnection(connection))
-
-        val liquibase: Liquibase = Liquibase(
+        Liquibase(
             "db.changelog-master.yaml",
             ClassLoaderResourceAccessor(),
-            database
-        )
-        liquibase.update(Contexts())
+            DatabaseFactory.getInstance().findCorrectDatabaseImplementation(JdbcConnection(connectionFactory.openConnection()))
+        ).use {  liquibase -> liquibase.update(Contexts()) }
     }
 
     @Test
     fun `transfer constraint test`() {
         // given
         val transfer: AccountTransfer = TransferConstraint(connectionFactory)
-
 
         // when
         transfer.transfer(1, 2, 1000)
