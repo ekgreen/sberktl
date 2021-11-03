@@ -1,10 +1,10 @@
 package ru.sber.rdbms
 
 import mu.KLogging
-import ru.sber.rdbms.api.AccountTransfer
-import ru.sber.rdbms.api.Lock
+import ru.sber.rdbms.api.*
 import ru.sber.rdbms.factory.ConnectionFactory
 import java.sql.*
+import java.util.*
 
 class TransferWithLock(private val connectionFactory: ConnectionFactory, private val lock: Lock = Lock.OPTIMISTIC) :
     AccountTransfer {
@@ -25,7 +25,7 @@ class TransferWithLock(private val connectionFactory: ConnectionFactory, private
 
     private fun createChange(connection: Connection, decrementAccountId: Long, incrementAccountId: Long): Change {
         return when (lock) {
-            Lock.OPTIMISTIC -> createOptimisticChange(connection, decrementAccountId, incrementAccountId)
+            Lock.OPTIMISTIC  -> createOptimisticChange(connection, decrementAccountId, incrementAccountId)
             Lock.PESSIMISTIC -> createPessimisticChange(connection, decrementAccountId, incrementAccountId)
         }
     }
@@ -38,36 +38,43 @@ class TransferWithLock(private val connectionFactory: ConnectionFactory, private
                 result.next() // first account
                 val account1: Account = mapAccountFromResultSet(result)
                 result.next() // second account
-                mapAccountFromResultSet(result)
                 val account2: Account = mapAccountFromResultSet(result)
 
                 return OptimisticChange(
                     if (account1.id == decrementAccountId) account1 else account2,
-                    if (account1.id == incrementAccountId) account1 else account2
+                    if (account1.id == incrementAccountId) account1 else account2,
                 )
             }
         }
     }
 
     private fun createPessimisticChange(connection: Connection, decrementAccountId: Long, incrementAccountId: Long): Change {
-        val accounts = pessimisticLockOrder(decrementAccountId, incrementAccountId).map { accountId ->
-            connection.prepareStatement("select id, amount, version from rdbms.account where id = $accountId for update")
-                .use { statement ->
-                    statement.executeQuery().use {
-                        it.next()
-                        mapAccountFromResultSet(it)
-                    }
-                }
+        val transferRelease: TransferRelease = ReUsableTransferRelease(decrementAccountId, incrementAccountId)
+
+        return transferRelease.release(
+            decrementCallback = { lockAndGetRow(connection, it, lock = RowLock.ON_UPDATE) },
+            incrementCallback = { lockAndGetRow(connection, it, lock = RowLock.ON_UPDATE) }
+        ).use { decrementAccount, incrementAccount -> OptimisticChange(decrementAccount,incrementAccount, transferRelease)}
+    }
+
+    private fun lockAndGetRow(connection: Connection, accountId: Long, lock: RowLock = RowLock.ON_UPDATE): Account {
+        val statement: PreparedStatement = when(lock){
+            RowLock.ON_UPDATE ->  connection.prepareStatement("select id, amount, version from rdbms.account where id = $accountId for update")
         }
 
-        return OptimisticChange(
-            if (accounts[0].id == decrementAccountId) accounts[0] else accounts[1],
-            if (accounts[0].id == incrementAccountId) accounts[0] else accounts[1]
-        )
+        statement.use { it.executeQuery().use { result ->
+            result.next()
+            return mapAccountFromResultSet(result)
+        } }
     }
 
     // используем класс оптимистичной блокировки и для пессимистичной: переиспользуем код и некое наследование в иерархии блокировок
-    private inner class OptimisticChange(private val decrementAccount: Account, private val incrementAccount: Account) : Change {
+    // TransferRelease передается как параметр, для поддержания консистентности последовательности вызовов
+    private inner class OptimisticChange(
+        private val decrementAccount: Account,
+        private val incrementAccount: Account,
+        val transferRelease: TransferRelease = ReUsableTransferRelease(decrementAccount.id,incrementAccount.id)
+    ) : Change {
 
         override fun change(amount: Long, connection: Connection) {
             if(logger.isDebugEnabled)
@@ -76,21 +83,18 @@ class TransferWithLock(private val connectionFactory: ConnectionFactory, private
             if (decrementAccount.amount - amount < 0)
                 throw SQLException("transfer rejected, decrement-account's \"amount\" might be equal or greater than 0")
 
-            val statement =
-                connection.createStatement()
-
-            statement.addBatch("update rdbms.account set amount = amount - $amount, version = version + 1 where id = ${decrementAccount.id} and version = ${decrementAccount.version}")
-            statement.addBatch("update rdbms.account set amount = amount + $amount, version = version + 1 where id = ${incrementAccount.id} and version = ${incrementAccount.version}")
-
-            statement.use {
-                if (it.executeBatch().any { result -> result != 1 })
-                    throw SQLException("transfer rejected, decrement/increment-account's \"version\" were changed by other process during statement execution")
-            }
+            transferRelease.release(
+                decrementCallback = { executeUpdate(connection, "update rdbms.account set amount = amount - $amount, version = version + 1 where id = ${decrementAccount.id} and version = ${decrementAccount.version}") },
+                incrementCallback = { executeUpdate(connection, "update rdbms.account set amount = amount + $amount, version = version + 1 where id = ${incrementAccount.id} and version = ${incrementAccount.version}") }
+            )
         }
     }
 
-    private fun pessimisticLockOrder(decrementAccountId: Long, incrementAccountId: Long): List<Long> {
-        return listOf(decrementAccountId, incrementAccountId).sorted()
+    private fun executeUpdate(connection: Connection, sql: String){
+        connection.prepareStatement(sql).use {
+            if(it.executeUpdate() != 1)
+                throw SQLException("transfer rejected, decrement/increment-account's \"version\" were changed by other process during statement execution")
+        }
     }
 
     private fun mapAccountFromResultSet(resultSet: ResultSet): Account {

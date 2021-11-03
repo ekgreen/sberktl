@@ -5,15 +5,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import liquibase.Contexts
 import liquibase.Liquibase
-import liquibase.database.Database
 import liquibase.database.DatabaseFactory
 import liquibase.database.jvm.JdbcConnection
 import liquibase.resource.ClassLoaderResourceAccessor
 import mu.KLogging
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
@@ -22,6 +23,8 @@ import ru.sber.rdbms.api.Lock
 import ru.sber.rdbms.factory.ConnectionFactory
 import ru.sber.rdbms.factory.EasyConnectionFactory
 import java.sql.Connection
+import java.sql.ResultSet
+import java.util.stream.Stream
 
 
 @Testcontainers
@@ -43,182 +46,83 @@ internal class AccountTransferTest {
         Liquibase(
             "db.changelog-master.yaml",
             ClassLoaderResourceAccessor(),
-            DatabaseFactory.getInstance().findCorrectDatabaseImplementation(JdbcConnection(connectionFactory.openConnection()))
-        ).use {  liquibase -> liquibase.update(Contexts()) }
+            DatabaseFactory.getInstance()
+                .findCorrectDatabaseImplementation(JdbcConnection(connectionFactory.openConnection()))
+        ).use { liquibase -> liquibase.update(Contexts()) }
     }
 
-    @Test
-    fun `transfer constraint test`() {
+    @ParameterizedTest
+    @MethodSource("accountTransferMethod")
+    fun `transfer constraint test`(factoryType: String, block: (ConnectionFactory) -> AccountTransfer) {
         // given
-        val transfer: AccountTransfer = TransferConstraint(connectionFactory)
+        val accountTransfer: AccountTransfer = block(connectionFactory)
 
         // when
-        transfer.transfer(1, 2, 1000)
+        accountTransfer.transfer(1, 2, 1000)
 
         // then
-        testTransfer(1000, 3000)
+        testTransfer(1, 2)
     }
 
-    @Test
-    fun `transfer constraint concurrency test`() {
+    @ParameterizedTest
+    @MethodSource("accountTransferMethod")
+    fun `transfer concurrency test`(factoryType: String, block: (ConnectionFactory) -> AccountTransfer) {
         // given
-        val transfer: AccountTransfer = TransferConstraint(connectionFactory)
-
-        // when
-        runBlocking(context = Dispatchers.Default) {
-            repeat(1000) {
-                launch { transfer.transfer(1, 2, 1) }
-            }
-        }
-
-        // then
-        testTransfer(1000, 3000)
-    }
-
-
-    @Test
-    fun `batch transfer constraint test`() {
-        // given
-        val transfer: AccountTransfer = BatchTransferConstraint(connectionFactory)
-
-        // when
-        transfer.transfer(1, 2, 1000)
-
-        // then
-        testTransfer(1000, 3000)
-    }
-
-    @Test
-    fun `batch transfer constraint concurrency test`() {
-        // given
-        val transfer: AccountTransfer = BatchTransferConstraint(connectionFactory)
+        val accountTransfer: AccountTransfer = block(connectionFactory)
 
         // when
         runBlocking(context = Dispatchers.Default) {
             repeat(1000) {
-                launch { transfer.transfer(1, 2, 1) }
+                launch { accountTransfer.transfer(1, 2, 1) }
             }
         }
 
         // then
-        testTransfer(1000, 3000)
+        testTransfer(1, 2)
     }
 
-    @Test
-    fun `optimistic transfer`() {
+    @ParameterizedTest
+    @MethodSource("accountTransferMethod")
+    fun `cross-transfer (deadlock) concurrency test`(factoryType: String, block: (ConnectionFactory) -> AccountTransfer) {
         // given
-        val transfer: AccountTransfer = TransferWithLock(connectionFactory, lock = Lock.OPTIMISTIC)
-
-        // when
-        transfer.transfer(1, 2, 1000)
-
-        // then
-        testTransfer(1000, 3000)
-    }
-
-    @Test
-    fun `optimistic transfer concurrency test`() {
-        // given
-        val transfer: AccountTransfer = TransferWithLock(connectionFactory, lock = Lock.OPTIMISTIC)
-
-        // when
-        runBlocking(context = Dispatchers.Default) {
-            repeat(1000) {
-                launch { transfer.transfer(1, 2, 1) }
-            }
-        }
-
-        // then
-        // версия аккаунта с которого списываем средства = версии аккаунта на который переводим средства
-        connectionFactory.openConnection().use { connection ->
-            val version1: Long = getAccountVersion(1, connection)
-            val version2: Long = getAccountVersion(2, connection)
-            assertEquals(version1, version2)
-        }
-    }
-
-    @Test
-    fun `pessimistic transfer`() {
-        // given
-        val transfer: AccountTransfer = TransferWithLock(connectionFactory, lock = Lock.PESSIMISTIC)
-
-        // when
-        transfer.transfer(1, 2, 1000)
-
-        // then
-        testTransfer(1000, 3000)
-    }
-
-    @Test
-    fun `pessimistic transfer concurrency test`() {
-        // given
-        val transfer: AccountTransfer = TransferWithLock(connectionFactory, lock = Lock.PESSIMISTIC)
-
-        // when
-        runBlocking(context = Dispatchers.Default) {
-            repeat(1000) {
-                launch { transfer.transfer(1, 2, 1) }
-            }
-        }
-
-        // then
-        testTransfer(1000, 3000)
-        // версия аккаунта с которого списываем средства = версии аккаунта на который переводим средства и все они равны 1000
-        connectionFactory.openConnection().use { connection ->
-            assertEquals(1000, getAccountVersion(1, connection))
-            assertEquals(1000, getAccountVersion(2, connection))
-        }
-    }
-
-    @Test
-    fun `pessimistic transfer deadlock concurrency test`() {
-        // given
-        val transfer: AccountTransfer = TransferWithLock(connectionFactory, lock = Lock.PESSIMISTIC)
+        val accountTransfer: AccountTransfer = block(connectionFactory)
 
         // when
         runBlocking(context = Dispatchers.Default) {
             launch {
                 repeat(500) {
-                    launch { transfer.transfer(1, 2, 1) }
+                    launch { accountTransfer.transfer(1, 2, 1) }
                 }
             }
             launch {
                 repeat(500) {
-                    launch { transfer.transfer(2, 1, 1) }
+                    launch { accountTransfer.transfer(2, 1, 1) }
                 }
             }
         }
 
         // then
-        testTransfer(2000, 2000)
-        // версия аккаунта с которого списываем средства = версии аккаунта на который переводим средства и все они равны 1000
-        connectionFactory.openConnection().use { connection ->
-            assertEquals(1000, getAccountVersion(1, connection))
-            assertEquals(1000, getAccountVersion(2, connection))
-        }
+        testTransfer(1, 2)
     }
-
 
     // region evaluations
 
-    private fun getAccountVersion(accountId: Long, connection: Connection): Long {
-        connection.prepareStatement("select version from rdbms.account where id = 1").use { it.executeQuery().use {
-            it.next()
-            return it.getLong(1)
-        } }
-    }
-
-    private fun testTransfer(expectedAmountOn1: Int, expectedAmountOn2: Int) {
+    private fun testTransfer(accountId1: Int, accountId2: Int) {
         connectionFactory.openConnection().use { connection ->
-            arrayOf(expectedAmountOn1, expectedAmountOn2).withIndex().forEach {
-                connection.prepareStatement("select amount from rdbms.account where id = ${it.index + 1}")
-                    .use { statement ->
-                        statement.executeQuery().use { resultSet ->
-                            assertTrue(resultSet.next())
-                            assertEquals(it.value, resultSet.getInt(1))
-                        }
-                    }
-            }
+            val decrementResultSet: ResultSet = connection.prepareStatement("select amount, version from rdbms.account where id = $accountId1")
+                .executeQuery()
+            val incrementResultSet: ResultSet = connection.prepareStatement("select amount, version from rdbms.account where id = $accountId2")
+                .executeQuery()
+
+            decrementResultSet.use { decrementAccount -> incrementResultSet.use { incrementAccount ->
+                decrementAccount.next()
+                incrementAccount.next()
+
+                // определяем, были-ли потеряна денежные средства
+                assertEquals(4000, decrementAccount.getLong(1) + incrementAccount.getLong(1))
+                // определяем, были-ли параллельные изменения версии (по сути первое исключает второе, но ради интереса)
+                assertEquals(decrementAccount.getLong(2) , incrementAccount.getLong(2))
+            } }
         }
     }
 
@@ -230,5 +134,23 @@ internal class AccountTransferTest {
         const val name: String = "db"
         const val user: String = "postgres"
         const val password: String = "postgres"
+
+        @JvmStatic
+        fun accountTransferMethod(): Stream<out Arguments> {
+            return Stream.of(
+                Arguments.of(
+                    "Optimistic lock", { connectionFactory: ConnectionFactory -> TransferWithLock(connectionFactory, lock = Lock.OPTIMISTIC) }
+                ),
+                Arguments.of(
+                    "Pessimistic lock", { connectionFactory: ConnectionFactory -> TransferWithLock(connectionFactory, lock = Lock.PESSIMISTIC) }
+                ),
+                Arguments.of(
+                    "No lock", { connectionFactory: ConnectionFactory -> TransferConstraint(connectionFactory) }
+                ),
+                Arguments.of(
+                    "No lock (batch mode)", { connectionFactory: ConnectionFactory -> TransferBatchConstraint(connectionFactory) }
+                )
+            )
+        }
     }
 }
