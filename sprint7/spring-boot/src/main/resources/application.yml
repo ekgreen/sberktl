@@ -1,1 +1,10 @@
-
+spring:
+  jpa:
+    open-in-view: true
+  datasource:
+    hikari:
+      connection-timeout: 2000
+      maximum-pool-size: 5
+    url: jdbc:postgresql://localhost:5432/db2
+    username: postgres # понятно что креды не надо так писать
+    password: postgres # понятно что креды не надо так писать

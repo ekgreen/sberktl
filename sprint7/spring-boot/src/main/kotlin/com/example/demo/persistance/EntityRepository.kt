@@ -1,3 +1,6 @@
 package com.example.demo.persistance
 
-interface EntityRepository
+import org.springframework.data.repository.CrudRepository
+
+
+interface EntityRepository: CrudRepository<Entity, Long>{}

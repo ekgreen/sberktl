@@ -2,8 +2,6 @@ package com.github.ekgreen.springmvc.model.dto
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import java.time.LocalDate
-import java.util.*
-import javax.validation.Constraint
 import javax.validation.constraints.*
 
 data class ContactDto @JsonCreator constructor(
