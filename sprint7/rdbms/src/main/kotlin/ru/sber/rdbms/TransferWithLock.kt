@@ -13,7 +13,7 @@ class TransferWithLock(private val connectionFactory: ConnectionFactory, private
         connectionFactory.openTransactionalConnection().use { connection ->
             try {
                 createChange(connection, decrementAccountId, incrementAccountId)
-                    .change(amount, connection)
+                    .change(connection, amount)
 
                 connection.commit()
             } catch (exception: SQLException) {
@@ -76,7 +76,7 @@ class TransferWithLock(private val connectionFactory: ConnectionFactory, private
         val transferRelease: TransferRelease = ReUsableTransferRelease(decrementAccount.id,incrementAccount.id)
     ) : Change {
 
-        override fun change(amount: Long, connection: Connection) {
+        override fun change(connection: Connection, amount: Long) {
             if(logger.isDebugEnabled)
                 logger.debug("change between ${decrementAccount.id}[${decrementAccount.amount}] and ${incrementAccount.id}[${incrementAccount.amount}] amount of $amount")
 
@@ -102,7 +102,7 @@ class TransferWithLock(private val connectionFactory: ConnectionFactory, private
     }
 
     private interface Change {
-        fun change(amount: Long, connection: Connection)
+        fun change(connection: Connection, amount: Long)
     }
 
     data class Account(val id: Long, val amount: Long, val version: Long)
