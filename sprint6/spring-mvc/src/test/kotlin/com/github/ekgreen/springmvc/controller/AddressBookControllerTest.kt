@@ -25,7 +25,8 @@ import javax.servlet.http.Cookie
 
 @SpringBootTest
 @AutoConfigureMockMvc
- internal class AddressBookControllerTest {
+@TestPropertySource(properties = ["AUTH_SERVICE_SECRET=elephant_on_the_street_playing_with_boy"])
+internal class AddressBookControllerTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc

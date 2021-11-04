@@ -11,7 +11,6 @@ import liquibase.resource.ClassLoaderResourceAccessor
 import mu.KLogging
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -22,7 +21,6 @@ import ru.sber.rdbms.api.AccountTransfer
 import ru.sber.rdbms.api.Lock
 import ru.sber.rdbms.factory.ConnectionFactory
 import ru.sber.rdbms.factory.EasyConnectionFactory
-import java.sql.Connection
 import java.sql.ResultSet
 import java.util.stream.Stream
 

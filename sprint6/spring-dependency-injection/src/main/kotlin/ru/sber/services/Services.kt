@@ -36,7 +36,7 @@ class SetterInjectionService {
 }
 
 @Component
-class Service {
+open class Service {
     override fun toString(): String {
         return "Service"
     }

@@ -5,28 +5,18 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.ValueSource
-import org.mockito.Mock
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.http.HttpStatus
-import org.springframework.mock.web.MockHttpServletResponse
-import org.springframework.test.context.TestPropertySource
 import org.springframework.web.client.HttpClientErrorException
 import org.thymeleaf.TemplateEngine
 import org.thymeleaf.context.WebContext
-import java.io.PrintWriter
-import java.io.StringWriter
-import java.time.DayOfWeek
 import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
-import kotlin.test.assertEquals
 
 internal class AuthServletTest {
 

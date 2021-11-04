@@ -5,6 +5,6 @@ spring:
     hikari:
       connection-timeout: 2000
       maximum-pool-size: 5
-    url: jdbc:postgresql://localhost:5432/db2
+    url: jdbc:postgresql://localhost:5432/db
     username: postgres # понятно что креды не надо так писать
     password: postgres # понятно что креды не надо так писать
