@@ -116,7 +116,7 @@ internal class AccountTransferTest {
                 decrementAccount.next()
                 incrementAccount.next()
 
-                // определяем, были-ли потеряна денежные средства
+                // определяем, были-ли потеряны денежные средства
                 assertEquals(4000, decrementAccount.getLong(1) + incrementAccount.getLong(1))
                 // определяем, были-ли параллельные изменения версии (по сути первое исключает второе, но ради интереса)
                 assertEquals(decrementAccount.getLong(2) , incrementAccount.getLong(2))

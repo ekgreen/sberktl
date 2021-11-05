@@ -73,7 +73,7 @@ class TransferWithLock(private val connectionFactory: ConnectionFactory, private
     private inner class OptimisticChange(
         private val decrementAccount: Account,
         private val incrementAccount: Account,
-        val transferRelease: TransferRelease = ReUsableTransferRelease(decrementAccount.id,incrementAccount.id)
+        private val transferRelease: TransferRelease = ReUsableTransferRelease(decrementAccount.id,incrementAccount.id)
     ) : Change {
 
         override fun change(connection: Connection, amount: Long) {

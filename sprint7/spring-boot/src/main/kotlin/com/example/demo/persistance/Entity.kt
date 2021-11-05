@@ -28,5 +28,4 @@ class Entity(
     }
 
     override fun hashCode(): Int = javaClass.hashCode()
-
 }
