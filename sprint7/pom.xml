@@ -12,6 +12,8 @@
         <module>spring-boot</module>
         <module>rdbms</module>
         <module>orm</module>
+        <module>spring-data-jpa</module>
+        <module>spring-data-jdbc</module>
     </modules>
 
 </project>
