@@ -1,10 +1,6 @@
 package com.github.ekgreen
 
-import com.github.ekgreen.entity.Animal
-import com.github.ekgreen.entity.Chip
-import com.github.ekgreen.entity.Gamekeeper
-import com.github.ekgreen.entity.Park
-import com.github.ekgreen.entity.Zone
+import com.github.ekgreen.entity.*
 import com.github.ekgreen.repository.Attribute
 import com.github.ekgreen.repository.jpa.JpaCrudRepository
 import org.hibernate.SessionFactory
@@ -15,16 +11,22 @@ fun main() {
     val sessionFactory: SessionFactory = Configuration().configure()
         .addAnnotatedClass(Animal::class.java)
         .addAnnotatedClass(Chip::class.java)
+        .addAnnotatedClass(ChipInstance::class.java)
         .addAnnotatedClass(Gamekeeper::class.java)
         .addAnnotatedClass(Park::class.java)
         .addAnnotatedClass(Zone::class.java)
         .buildSessionFactory()
 
     sessionFactory.use { factory ->
-        // Получим, который подходит чип для Земли и Пандоры
+        // Получим, тип чипа который подходит чип для Земли и Пандоры
         // index: brand & model
         val chipRepository = JpaCrudRepository<Chip, UUID>(factory, Chip::class.java)
         val eva: Chip = chipRepository.findBy(Attribute("brand", "wall&eva"), Attribute("model", "we-213951"))
+
+        // Создадим новый чип
+        val chipInstanceRepository = JpaCrudRepository<ChipInstance, UUID>(factory, ChipInstance::class.java)
+        val newEvaChip = ChipInstance(UUID.randomUUID(), chip = eva)
+        newEvaChip.id = chipInstanceRepository.create(newEvaChip)
 
         // Получим зону на Пандоре по id (например мы его откуда-то знаем)
         val zoneRepository = JpaCrudRepository<Zone, UUID>(factory, Zone::class.java)
@@ -37,7 +39,7 @@ fun main() {
             id = UUID.randomUUID(),
             type = "Стингбат",
             name = "Мотылек",
-            chip = eva,
+            chip = newEvaChip,
             areal = waterfall,
         )
 
@@ -48,7 +50,10 @@ fun main() {
         // index: brand & model
         val intergalactic: Chip =
             chipRepository.findBy(Attribute("brand", "intergalactic"), Attribute("model", "inc-21e5"))
-        moth.chip = intergalactic
+        val newIntergalacticChip = ChipInstance(UUID.randomUUID(), chip = intergalactic)
+        newIntergalacticChip.id = chipInstanceRepository.create(newIntergalacticChip)
+
+        moth.chip = newIntergalacticChip
         animalRepository.update(moth)
 
         // Выпустим из заповедника Стингабата (но оставим в сердечке)

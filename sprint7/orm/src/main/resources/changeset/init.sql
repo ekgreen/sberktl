@@ -35,28 +35,41 @@ create table if not exists reserve.zone(
     foreign key (gamekeeper_id) references reserve.gamekeeper (id)
 );
 
--- Животных чипируют для отслеживания их состояния
+-- Виды чипов
 create table if not exists reserve.chip(
-    id          uuid         constraint chip_pk primary key,
-    brand       varchar(32) not null,
-    model       varchar(32) not null,
-    description varchar(512),
+    id              uuid         constraint chip_pk primary key,
+    brand           varchar(32) not null,
+    model           varchar(32) not null,
+    validity_period int         not null,
+    description     varchar(512),
 
     unique      (brand,model)
+);
+
+-- Животных чипируют для отслеживания их состояния
+create table if not exists reserve.chip_instance(
+    id                      uuid        constraint chip_instance_pk primary key,
+    start_exploitation_date timestamp   not null   default now(),
+    is_active               boolean     not null   default true,
+
+    chip_id                 uuid        not null,
+
+    foreign key (chip_id) references reserve.chip (id)
 );
 
 -- Животные обитают в Зонах
 -- У Животного есть Чип
 create table if not exists reserve.animal(
-    id      uuid         constraint animal_pk primary key,
-    type    varchar(128) not null,
-    name    varchar(128) not null,
+    id                  uuid         constraint animal_pk primary key,
+    type                varchar(128) not null,
+    name                varchar(128) not null,
 
-    chip_id uuid         not null,
-    zone_id uuid         not null,
+    chip_instance_id    uuid         not null,
+    zone_id             uuid         not null,
 
-    foreign key (chip_id) references reserve.chip (id),
-    foreign key (zone_id) references reserve.zone (id)
+    unique      (chip_instance_id),
+    foreign key (chip_instance_id) references reserve.chip_instance (id),
+    foreign key (zone_id)          references reserve.zone (id)
 );
 
 create index if not exists ix_animal_type on reserve.animal (type);
@@ -81,45 +94,93 @@ insert into reserve.zone (id, code, name, description, park_id, gamekeeper_id)
 insert into reserve.zone (id, code, name, description, park_id, gamekeeper_id)
     values ('dd1d13d7-e1cd-4969-a74c-4fee05ab9e07', 27, 'Водопад Джекели', 'Местность вокруг самого большого водопада, здесь собирается вся живность', 'aa6e6c50-a796-4e54-8534-992e7b9d057a', '4c43d4af-b18d-427f-9ce3-a241282ff834');
 -- chip
-insert into reserve.chip (id, brand, model, description)
-    values ('22c01907-368f-41a8-828d-7443b066bd07', 'wall&eva', 'we-213951', 'Отлично подходил для обитателей Земли и некоторых регионов Пандоры');
-insert into reserve.chip (id, brand, model, description)
-    values ('33171e98-b2a3-4623-9e0c-105863444cf5', 'intergalactic', 'inc-21e5', 'Подходит крупным обитателям Пандоры');
+insert into reserve.chip (id, brand, model, validity_period, description)
+    values ('22c01907-368f-41a8-828d-7443b066bd07', 'wall&eva', 'we-213951', 3650, 'Отлично подходил для обитателей Земли и некоторых регионов Пандоры');
+insert into reserve.chip (id, brand, model, validity_period, description)
+    values ('33171e98-b2a3-4623-9e0c-105863444cf5', 'intergalactic', 'inc-21e5', 2000, 'Подходит крупным обитателям Пандоры');
 -- animals
 -- Утес Не Кастерли
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('9336b8bd-349e-4bff-8b92-4e45b1672ec0', 'Арахноид', 'Бэн', '33171e98-b2a3-4623-9e0c-105863444cf5', '12e75f71-c392-4385-8985-ab4271e4d91a');
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('ed1e9981-f3f6-46bc-837d-05a3ddbb8c87', 'Горный банши', 'Фрэд', '33171e98-b2a3-4623-9e0c-105863444cf5', '12e75f71-c392-4385-8985-ab4271e4d91a');
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('72cb8868-969d-473a-b3a5-860ec745ba5e', 'Горный банши', 'Фрэнд', '33171e98-b2a3-4623-9e0c-105863444cf5', '12e75f71-c392-4385-8985-ab4271e4d91a');
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('2bbcecce-0c6d-4578-b0be-b356f97fcac4', 'Кентрокапра', 'Креветка', '33171e98-b2a3-4623-9e0c-105863444cf5', '12e75f71-c392-4385-8985-ab4271e4d91a');
+insert into reserve.chip_instance (id, chip_id)
+    values ('9336b8bd-349e-4bff-8b92-4e45b1672ec1', '33171e98-b2a3-4623-9e0c-105863444cf5');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('9336b8bd-349e-4bff-8b92-4e45b1672ec0', 'Арахноид', 'Бэн', '9336b8bd-349e-4bff-8b92-4e45b1672ec1', '12e75f71-c392-4385-8985-ab4271e4d91a');
+
+insert into reserve.chip_instance (id, chip_id)
+    values ('ed1e9981-f3f6-46bc-837d-05a3ddbb8c88', '33171e98-b2a3-4623-9e0c-105863444cf5');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('ed1e9981-f3f6-46bc-837d-05a3ddbb8c87', 'Горный банши', 'Фрэд', 'ed1e9981-f3f6-46bc-837d-05a3ddbb8c88', '12e75f71-c392-4385-8985-ab4271e4d91a');
+
+insert into reserve.chip_instance (id, chip_id)
+    values ('72cb8868-969d-473a-b3a5-860ec745ba6e', '33171e98-b2a3-4623-9e0c-105863444cf5');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('72cb8868-969d-473a-b3a5-860ec745ba5e', 'Горный банши', 'Фрэнд', '72cb8868-969d-473a-b3a5-860ec745ba6e', '12e75f71-c392-4385-8985-ab4271e4d91a');
+
+insert into reserve.chip_instance (id, chip_id)
+    values ('2bbcecce-0c6d-4578-b0be-b356f97fcac5', '33171e98-b2a3-4623-9e0c-105863444cf5');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('2bbcecce-0c6d-4578-b0be-b356f97fcac4', 'Кентрокапра', 'Креветка', '2bbcecce-0c6d-4578-b0be-b356f97fcac5', '12e75f71-c392-4385-8985-ab4271e4d91a');
+
 -- Равнина динозавров
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('ec79413f-fd27-4856-81ca-acae12dd65c8', 'Молотоглавый титанотерий', 'Терентий', '22c01907-368f-41a8-828d-7443b066bd07', '9c78569e-8943-4a3f-8e6c-870925f663e4');
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('bb8fc9d7-2fff-4990-b225-dee49c4480c9', 'Трицерапторс', 'Арсений', '22c01907-368f-41a8-828d-7443b066bd07', '9c78569e-8943-4a3f-8e6c-870925f663e4');
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('d07c376d-75f4-4984-a1ed-866569c74017', 'Диплодок', 'Жираф', '33171e98-b2a3-4623-9e0c-105863444cf5', '9c78569e-8943-4a3f-8e6c-870925f663e4');
+insert into reserve.chip_instance (id, chip_id)
+    values ('ec79413f-fd27-4856-81ca-acae12dd65c9', '22c01907-368f-41a8-828d-7443b066bd07');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('ec79413f-fd27-4856-81ca-acae12dd65c8', 'Молотоглавый титанотерий', 'Терентий', 'ec79413f-fd27-4856-81ca-acae12dd65c9', '9c78569e-8943-4a3f-8e6c-870925f663e4');
+
+insert into reserve.chip_instance (id, chip_id)
+    values ('bb8fc9d7-2fff-4990-b225-dee49c4480c0', '22c01907-368f-41a8-828d-7443b066bd07');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('bb8fc9d7-2fff-4990-b225-dee49c4480c9', 'Трицерапторс', 'Арсений', 'bb8fc9d7-2fff-4990-b225-dee49c4480c0', '9c78569e-8943-4a3f-8e6c-870925f663e4');
+
+insert into reserve.chip_instance (id, chip_id)
+    values ('d07c376d-75f4-4984-a1ed-866569c74018', '33171e98-b2a3-4623-9e0c-105863444cf5');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('d07c376d-75f4-4984-a1ed-866569c74017', 'Диплодок', 'Жираф', 'd07c376d-75f4-4984-a1ed-866569c74018', '9c78569e-8943-4a3f-8e6c-870925f663e4');
+
 -- Водопад Джекели
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('9a3729ab-d812-4e46-a380-c85dcaf1c1e0', 'Анемоноид', 'Сирена', '22c01907-368f-41a8-828d-7443b066bd07', 'dd1d13d7-e1cd-4969-a74c-4fee05ab9e07');
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('1a9ee854-a4d0-4216-a87a-1fb5a663bcb3', 'Стурмбист', 'Бист', '22c01907-368f-41a8-828d-7443b066bd07', 'dd1d13d7-e1cd-4969-a74c-4fee05ab9e07');
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('76bdff01-2b8a-47b7-8464-648447a884c7', 'Тетраптерон', 'Чайка', '22c01907-368f-41a8-828d-7443b066bd07', 'dd1d13d7-e1cd-4969-a74c-4fee05ab9e07');
+insert into reserve.chip_instance (id, chip_id)
+    values ('9a3729ab-d812-4e46-a380-c85dcaf1c1e1', '22c01907-368f-41a8-828d-7443b066bd07');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('9a3729ab-d812-4e46-a380-c85dcaf1c1e0', 'Анемоноид', 'Сирена', '9a3729ab-d812-4e46-a380-c85dcaf1c1e1', 'dd1d13d7-e1cd-4969-a74c-4fee05ab9e07');
+
+insert into reserve.chip_instance (id, chip_id)
+    values ('1a9ee854-a4d0-4216-a87a-1fb5a663bcb4', '22c01907-368f-41a8-828d-7443b066bd07');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('1a9ee854-a4d0-4216-a87a-1fb5a663bcb3', 'Стурмбист', 'Бист', '1a9ee854-a4d0-4216-a87a-1fb5a663bcb4', 'dd1d13d7-e1cd-4969-a74c-4fee05ab9e07');
+
+insert into reserve.chip_instance (id, chip_id)
+    values ('76bdff01-2b8a-47b7-8464-648447a884c8', '22c01907-368f-41a8-828d-7443b066bd07');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('76bdff01-2b8a-47b7-8464-648447a884c7', 'Тетраптерон', 'Чайка', '76bdff01-2b8a-47b7-8464-648447a884c8', 'dd1d13d7-e1cd-4969-a74c-4fee05ab9e07');
+
 -- Травянистая роща
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('ba567ffa-98d5-42e1-9d5b-cb042bc9da39', 'Единорог', 'Искорка Искорка', '22c01907-368f-41a8-828d-7443b066bd07', '50d66d39-d5a4-4298-9958-0fd8ed9a8add');
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('bcb0a765-ab62-48d5-9832-58d701588549', 'Единорог', 'Пинки Пай', '22c01907-368f-41a8-828d-7443b066bd07', '50d66d39-d5a4-4298-9958-0fd8ed9a8add');
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('3b7075e7-10f3-4f8f-b758-134c0d1fd0d6', 'Единорог', 'Принцесса Селестия', '22c01907-368f-41a8-828d-7443b066bd07', '50d66d39-d5a4-4298-9958-0fd8ed9a8add');
+insert into reserve.chip_instance (id, chip_id)
+    values ('ba567ffa-98d5-42e1-9d5b-cb042bc9da30', '22c01907-368f-41a8-828d-7443b066bd07');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('ba567ffa-98d5-42e1-9d5b-cb042bc9da39', 'Единорог', 'Искорка Искорка', 'ba567ffa-98d5-42e1-9d5b-cb042bc9da30', '50d66d39-d5a4-4298-9958-0fd8ed9a8add');
+
+insert into reserve.chip_instance (id, chip_id)
+    values ('bcb0a765-ab62-48d5-9832-58d701588540', '22c01907-368f-41a8-828d-7443b066bd07');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('bcb0a765-ab62-48d5-9832-58d701588549', 'Единорог', 'Пинки Пай', 'bcb0a765-ab62-48d5-9832-58d701588540', '50d66d39-d5a4-4298-9958-0fd8ed9a8add');
+
+insert into reserve.chip_instance (id, chip_id)
+    values ('3b7075e7-10f3-4f8f-b758-134c0d1fd0d9', '22c01907-368f-41a8-828d-7443b066bd07');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('3b7075e7-10f3-4f8f-b758-134c0d1fd0d8', 'Единорог', 'Принцесса Селестия', '3b7075e7-10f3-4f8f-b758-134c0d1fd0d9', '50d66d39-d5a4-4298-9958-0fd8ed9a8add');
+
+
 -- Пустыня "Жаренное солнце"
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('6fc59912-b781-4adf-8ef8-d9b959b839c2', 'Шакал', 'Бывший', '22c01907-368f-41a8-828d-7443b066bd07', '3511e1ba-c733-471b-b3df-04da441f9b64');
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('264e50c7-3427-49e1-a304-b56d4e1470d4', 'Барханные коты', 'Бархан', '22c01907-368f-41a8-828d-7443b066bd07', '3511e1ba-c733-471b-b3df-04da441f9b64');
-insert into reserve.animal (id, type, name, chip_id, zone_id)
-    values ('8b92f4b7-30ce-491e-bf38-5b8ea35c4685', 'Агам', 'Мага', '22c01907-368f-41a8-828d-7443b066bd07', '3511e1ba-c733-471b-b3df-04da441f9b64');
+insert into reserve.chip_instance (id, chip_id)
+    values ('3b7075e7-10f3-4f8f-b758-134c0d1fd0d7', '22c01907-368f-41a8-828d-7443b066bd07');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('3b7075e7-10f3-4f8f-b758-134c0d1fd0d6', 'Шакал', 'Бывший', '3b7075e7-10f3-4f8f-b758-134c0d1fd0d7', '3511e1ba-c733-471b-b3df-04da441f9b64');
+
+insert into reserve.chip_instance (id, chip_id)
+    values ('264e50c7-3427-49e1-a304-b56d4e1470d5', '22c01907-368f-41a8-828d-7443b066bd07');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('264e50c7-3427-49e1-a304-b56d4e1470d4', 'Барханные коты', 'Бархан', '264e50c7-3427-49e1-a304-b56d4e1470d5', '3511e1ba-c733-471b-b3df-04da441f9b64');
+
+insert into reserve.chip_instance (id, chip_id)
+    values ('8b92f4b7-30ce-491e-bf38-5b8ea35c4686', '22c01907-368f-41a8-828d-7443b066bd07');
+insert into reserve.animal (id, type, name, chip_instance_id, zone_id)
+    values ('8b92f4b7-30ce-491e-bf38-5b8ea35c4685', 'Агам', 'Мага', '8b92f4b7-30ce-491e-bf38-5b8ea35c4686', '3511e1ba-c733-471b-b3df-04da441f9b64');

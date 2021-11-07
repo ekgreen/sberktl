@@ -18,8 +18,8 @@ open class Animal(
     open var name: String? = null,
 
     @OneToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "chip_id", nullable = false)
-    open var chip: Chip? = null,
+    @JoinColumn(name = "chip_instance_id", nullable = false)
+    open var chip: ChipInstance? = null,
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "zone_id")

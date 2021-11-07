@@ -32,7 +32,6 @@ internal class JpaCrudRepositoryIntegrationTest {
         id = UUID.randomUUID(),
         type = "Стингбат",
         name = "Мотылек",
-        chip = Chip(id = UUID.fromString("33171e98-b2a3-4623-9e0c-105863444cf5")),
         areal = Zone(id = UUID.fromString("dd1d13d7-e1cd-4969-a74c-4fee05ab9e07")),
     )
 
@@ -43,12 +42,15 @@ internal class JpaCrudRepositoryIntegrationTest {
         sessionFactory = Configuration().configure()
             .addAnnotatedClass(Animal::class.java)
             .addAnnotatedClass(Chip::class.java)
+            .addAnnotatedClass(ChipInstance::class.java)
             .addAnnotatedClass(Gamekeeper::class.java)
             .addAnnotatedClass(Park::class.java)
             .addAnnotatedClass(Zone::class.java)
             .setProperty("hibernate.connection.url", db.jdbcUrl)
             .setProperty("connection.url", db.jdbcUrl)
             .buildSessionFactory()
+
+        animal.chip = createChip()
     }
 
     @Test
@@ -165,10 +167,24 @@ internal class JpaCrudRepositoryIntegrationTest {
     private fun createAnimalByJdbc(animal: Animal) {
         session {
             val statement = it.prepareStatement(
-                "insert into reserve.animal (id, type, name, chip_id, zone_id)\n" +
+                "insert into reserve.animal (id, type, name, chip_instance_id, zone_id)\n" +
                         "    values ('${animal.id}', '${animal.type}', '${animal.name}', '${animal.chip!!.id}', '${animal.areal!!.id}');")
 
             assert(statement.executeUpdate() == 1)
+        }
+    }
+
+    private fun createChip(): ChipInstance {
+        return session {
+            val chipId = UUID.randomUUID()
+            val modelId = UUID.fromString("33171e98-b2a3-4623-9e0c-105863444cf5")
+
+            val chipStatement = it.prepareStatement(
+                "insert into reserve.chip_instance (id, chip_id)\n" +
+                        "    values ('$chipId', '$modelId');")
+            assert(chipStatement.executeUpdate() == 1)
+
+            return@session ChipInstance(id = chipId, chip = Chip(id = modelId))
         }
     }
 
