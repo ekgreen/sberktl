@@ -18,7 +18,7 @@ fun main() {
         .buildSessionFactory()
 
     sessionFactory.use { factory ->
-        // Получим, тип чипа который подходит чип для Земли и Пандоры
+        // Получим тип чипа, который подходит чип для Земли и Пандоры
         // index: brand & model
         val chipRepository = JpaCrudRepository<Chip, UUID>(factory, Chip::class.java)
         val eva: Chip = chipRepository.findBy(Attribute("brand", "wall&eva"), Attribute("model", "we-213951"))

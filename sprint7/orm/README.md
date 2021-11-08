@@ -1,5 +1,46 @@
 # Реляционные базы данных. Hibernate
 
+## Сценарий
+
+`Заселим в зоопарк нового обитателя Стингбата по кличке «Мотылек»`
+
+Для этого нам потребуется выполнить несколько шагов:
+1. Получим тип чипа, который подходит чип для Земли и Пандоры;
+```java
+        val eva: Chip = chipRepository.findBy(Attribute("brand", "wall&eva"), Attribute("model", "we-213951"))
+```
+2. Произведем новый чип с типом из пункта (1);
+```java
+        val newEvaChip = ChipInstance(UUID.randomUUID(), chip = eva)
+        newEvaChip.id = chipInstanceRepository.create(newEvaChip)
+```
+3. Вычислим зону в которой будет обитать Стингбат;
+```java
+        val waterfall = zoneRepository.findById(UUID.fromString("dd1d13d7-e1cd-4969-a74c-4fee05ab9e07"))
+```
+4. Поселим животное (присвоив ему зону и экземпляр чипа) в нашем заповеднике;
+```java
+        val moth: Animal = Animal(
+            id = UUID.randomUUID(),
+            type = "Стингбат",
+            name = "Мотылек",
+            chip = newEvaChip,
+            areal = waterfall
+        )
+        val uuid: UUID = animalRepository.create(moth)
+```
+5. Изменим Стингбату чип на альтернативный (более подходящий), аналогично шагам (1) и (2);
+```java
+        moth.chip = newIntergalacticChip
+        animalRepository.update(moth)
+```
+6. Выпустим Стингбата на волю.
+```java
+        animalRepository.deleteById(uuid)
+```
+
+В примере нам потребуется **4** сущности из **6**: [Зоны](#Zone), [Животные](#Animal), [Экземпляр чипа](#ChipInstance), [Чип](#Chip).
+
 ## Схема «Заповедник»
 
 ### Park
