@@ -1,11 +1,11 @@
 package com.github.ekgreen.springmvc.book
 
-import com.github.ekgreen.springmvc.da.BookingRepository
-import com.github.ekgreen.springmvc.model.Contact
+import com.github.ekgreen.springmvc.book.da.BookingRepository
+import com.github.ekgreen.springmvc.book.model.da.Contact
 
 class BookingService(private val repository: BookingRepository) {
 
-    fun add(contact: Contact): Contact{
+    fun add(contact: Contact): Contact {
         // тут где-то должна быть бизнес логика
         // PS я умышлено не отделял модель для DA слоя, потому что все в мапке храним
         return repository.save(contact) // вернется с айдишником
@@ -41,5 +41,9 @@ class BookingService(private val repository: BookingRepository) {
     fun delete(id: String): Contact? {
         // тут где-то должна быть бизнес логика
         return repository.delete(id)
+    }
+
+    fun clear() {
+        repository.clear()
     }
 }

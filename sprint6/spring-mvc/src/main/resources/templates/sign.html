@@ -34,6 +34,11 @@
             <input type="checkbox" value="remember-me"> Remember me
         </label>
     </div>
+
+    <input type="hidden"
+           th:name="${_csrf.parameterName}"
+           th:value="${_csrf.token}"/>
+
     <input class="btn btn-lg btn-primary btn-block" type="submit" th:value="${signup} ? 'Sign up' : 'Sign in'"/>
     <th:block th:if="${!signup}">
         <p class="mt-3 mb-3 text-muted">or</p>

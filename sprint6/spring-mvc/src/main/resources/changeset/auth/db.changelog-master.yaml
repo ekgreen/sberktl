@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - include:
+      file: changeset/auth/v-1.0/2021-11-07--01-initial-schema-import.sql
+  - include:
+      file: changeset/auth/v-1.0/2021-11-07--02-initial-acl-class-import.sql
+  - include:
+      file: changeset/auth/v-1.0/2021-11-07--03-initial-acl-sid-import.sql
+  - include:
+      file: changeset/auth/v-1.0/2021-11-07--04-initial-acl-object-identity-import.sql
+  - include:
+      file: changeset/auth/v-1.0/2021-11-07--05-initial-acl-entry-import.sql
+  - include:
+      file: changeset/auth/v-1.0/2021-11-07--06-initial-users-import.sql
+  - include:
+      file: changeset/auth/v-1.0/2021-11-07--07-initial-authorities-import.sql
+  - include:
+      file: changeset/auth/v-1.0/2021-11-07--08-initial-default-users-dml-import.sql

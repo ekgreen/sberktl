@@ -83,6 +83,10 @@
                 </div>
             </div>
 
+            <input type="hidden"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}"/>
+
             <button class="btn btn-primary btn-lg btn-block mt-5" type="submit">Create new contact</button>
         </form>
     </div>
