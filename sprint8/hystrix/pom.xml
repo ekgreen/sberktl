@@ -15,6 +15,7 @@
         <junit.jupiter.version>5.7.2</junit.jupiter.version>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
+        <microutils.version>2.0.11</microutils.version>
     </properties>
 
     <dependencies>
@@ -72,6 +73,11 @@
             <artifactId>mockserver-client-java</artifactId>
             <version>3.10.8</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.microutils</groupId>
+            <artifactId>kotlin-logging-jvm</artifactId>
+            <version>${microutils.version}</version>
         </dependency>
     </dependencies>
 

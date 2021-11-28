@@ -1,4 +1,4 @@
-package ru.sberschool.hystrix
+package ru.sberschool.hystrix.example
 
 import feign.RequestLine
 
