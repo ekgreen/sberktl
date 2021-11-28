@@ -1,1 +1,26 @@
-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-profiled-app-deployment
+  labels:
+    app: docker-profiled-app
+    type: profiled
+spec:
+  template:
+    metadata:
+      name: docker-profiled-app-pod
+      labels:
+        app: docker-profiled-app
+        type: profiled
+    spec:
+      containers:
+        - name: docker-profiled-app-container
+          image: docker/profiled-app:1.0.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPRING_PROFILE
+              value: prod
+  replicas: 5
+  selector:
+    matchLabels:
+      type: profiled
